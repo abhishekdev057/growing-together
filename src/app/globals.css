@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-forest: #173c2f;
+  --color-deep-green: #102a22;
+  --color-leaf: #83a96b;
+  --color-sage: #dce6d5;
+  --color-ivory: #f3ebdd;
+  --color-paper: #fcfbf7;
+  --color-clay: #c47a4a;
+  --color-muted: #6d786e;
+  --color-background: #fcfbf7;
+  --color-foreground: #102a22;
+  --font-serif: var(--font-newsreader);
+  --font-sans: var(--font-inter);
+  --animate-fade-up: fade-up 0.8s ease forwards;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
+* {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-deep-green);
+}
+
+body {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+.font-serif {
+  font-family: var(--font-newsreader), Georgia, serif;
+}
+
+::selection {
+  background: var(--color-leaf);
+  color: var(--color-deep-green);
+}
+
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-clay);
+  outline-offset: 3px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 84rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-page {
+    padding-inline: 2.5rem;
+  }
 }
