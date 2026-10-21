@@ -1,15 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Play, Film } from "lucide-react";
+import { Play, Film, Loader2 } from "lucide-react";
 import { videoConfig } from "@/content/site";
 import { images } from "@/content/images";
 import { Reveal } from "./Reveal";
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+  const [sectionVisible, setSectionVisible] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const hasVideo = Boolean(videoConfig.youtubeId || videoConfig.localSrc);
+
+  // Once the player scrolls near the viewport, switch from a light
+  // metadata-only fetch to eagerly buffering the opening seconds, so
+  // clicking Play has data ready immediately instead of starting cold.
+  useEffect(() => {
+    if (!videoConfig.localSrc || !wrapperRef.current) return;
+    const node = wrapperRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSectionVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const handlePlay = () => {
+    setPlaying(true);
+    const el = videoRef.current;
+    if (el) {
+      el.play().catch(() => {
+        /* ignored: browser may require a direct gesture, which this click already is */
+      });
+    }
+  };
 
   return (
     <section id="film" className="bg-deep-green py-24 text-paper md:py-32">
@@ -27,8 +60,11 @@ export function VideoSection() {
         </Reveal>
 
         <Reveal delay={0.1} className="mt-14">
-          <div className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-2xl border border-paper/10 bg-black shadow-2xl">
-            {playing && videoConfig.youtubeId ? (
+          <div
+            ref={wrapperRef}
+            className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-2xl border border-paper/10 bg-black shadow-2xl"
+          >
+            {playing && videoConfig.youtubeId && (
               <iframe
                 className="absolute inset-0 h-full w-full"
                 src={`https://www.youtube-nocookie.com/embed/${videoConfig.youtubeId}?autoplay=1&rel=0`}
@@ -36,14 +72,30 @@ export function VideoSection() {
                 allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-            ) : playing && videoConfig.localSrc ? (
+            )}
+
+            {videoConfig.localSrc && (
               <video
+                ref={videoRef}
                 className="absolute inset-0 h-full w-full"
                 src={videoConfig.localSrc}
-                controls
-                autoPlay
+                controls={playing}
+                playsInline
+                preload={sectionVisible ? "auto" : "metadata"}
+                onWaiting={() => setBuffering(true)}
+                onPlaying={() => setBuffering(false)}
+                onCanPlay={() => setBuffering(false)}
+                tabIndex={playing ? 0 : -1}
               />
-            ) : (
+            )}
+
+            {buffering && playing && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+                <Loader2 className="h-9 w-9 animate-spin text-paper/90" aria-hidden="true" />
+              </div>
+            )}
+
+            {!playing && (
               <>
                 <Image
                   src={images.heroLandscape.src}
@@ -57,7 +109,9 @@ export function VideoSection() {
                 {hasVideo ? (
                   <button
                     type="button"
-                    onClick={() => setPlaying(true)}
+                    onClick={
+                      videoConfig.localSrc ? handlePlay : () => setPlaying(true)
+                    }
                     className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-paper"
                     aria-label={`Play video: ${videoConfig.title}`}
                   >
